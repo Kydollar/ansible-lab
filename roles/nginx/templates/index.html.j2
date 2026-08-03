@@ -6,7 +6,8 @@
   </head>
   <body>
     <h1>Managed by Ansible</h1>
-    <p>Host: {{ inventory_hostname }}</p>
+    <p>This is a simple web page served by Kydo.</p>
+    <p>This page is served by Nginx running on {{ inventory_hostname }}.</p>
     <p>Address: {{ ansible_host | default(inventory_hostname) }}</p>
   </body>
 </html>
