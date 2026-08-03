@@ -1,0 +1,6 @@
+# Managed by Ansible. Test console access before enabling this policy.
+PermitRootLogin no
+MaxAuthTries {{ security_sshd_max_auth_tries }}
+LoginGraceTime {{ security_sshd_login_grace_time }}
+X11Forwarding no
+PermitEmptyPasswords no

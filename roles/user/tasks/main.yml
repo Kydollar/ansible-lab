@@ -1,2 +1,56 @@
 ---
-# tasks file for roles/user
+- name: Verify the user role is running on Ubuntu
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+    fail_msg: "This interview lab currently supports Ubuntu only."
+
+- name: Ensure managed users exist
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.comment | default(omit) }}"
+    groups: "{{ item.groups | default([]) | join(',') }}"
+    append: true
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    create_home: true
+    state: present
+  loop: "{{ managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Create SSH directories for users with public keys
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0700"
+  loop: "{{ managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.authorized_keys | default([]) | length > 0
+
+- name: Install managed SSH public keys
+  ansible.builtin.copy:
+    content: "{{ item.authorized_keys | join('\n') }}\n"
+    dest: "/home/{{ item.name }}/.ssh/authorized_keys"
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0600"
+  loop: "{{ managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.authorized_keys | default([]) | length > 0
+
+- name: Configure optional passwordless sudo
+  ansible.builtin.copy:
+    content: "{{ item.name }} ALL=(ALL:ALL) NOPASSWD: ALL\n"
+    dest: "/etc/sudoers.d/90-{{ item.name }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  loop: "{{ managed_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: user_manage_passwordless_sudo | bool

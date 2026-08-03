@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Ansible Lab - {{ inventory_hostname }}</title>
+  </head>
+  <body>
+    <h1>Managed by Ansible</h1>
+    <p>Host: {{ inventory_hostname }}</p>
+    <p>Address: {{ ansible_host | default(inventory_hostname) }}</p>
+  </body>
+</html>

@@ -1,2 +1,25 @@
 ---
-# defaults file for roles/security
+security_manage_password_policy: true
+security_manage_sysctl: true
+security_manage_cron_permissions: true
+security_harden_ssh: false
+
+security_password_max_days: 365
+security_password_min_days: 1
+security_password_warn_age: 7
+security_umask: "027"
+
+security_sysctl_settings:
+  net.ipv4.ip_forward: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.conf.default.accept_source_route: 0
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  net.ipv4.tcp_syncookies: 1
+
+security_sshd_max_auth_tries: 4
+security_sshd_login_grace_time: 60

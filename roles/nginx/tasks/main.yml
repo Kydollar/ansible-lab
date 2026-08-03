@@ -1,2 +1,57 @@
 ---
-# tasks file for roles/nginx
+- name: Verify the Nginx role is running on Ubuntu
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+    fail_msg: "This interview lab currently supports Ubuntu only."
+
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create the lab document root
+  ansible.builtin.file:
+    path: "{{ nginx_document_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Render a host-specific landing page
+  ansible.builtin.template:
+    src: index.html.j2
+    dest: "{{ nginx_document_root }}/index.html"
+    owner: www-data
+    group: www-data
+    mode: "0644"
+
+- name: Configure the Ansible lab virtual host
+  ansible.builtin.template:
+    src: ansible-lab.conf.j2
+    dest: /etc/nginx/sites-available/ansible-lab.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Validate and reload Nginx
+
+- name: Enable the Ansible lab virtual host
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/ansible-lab.conf
+    dest: /etc/nginx/sites-enabled/ansible-lab.conf
+    state: link
+  notify: Validate and reload Nginx
+
+- name: Disable the default virtual host
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Validate and reload Nginx
+
+- name: Ensure Nginx is enabled and running
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started

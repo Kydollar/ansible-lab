@@ -1,0 +1,10 @@
+---
+- name: Run user-management use case
+  ansible.builtin.import_playbook: playbooks/01-user-management.yml
+
+- name: Run Nginx deployment use case
+  ansible.builtin.import_playbook: playbooks/02-nginx-deployment.yml
+
+- name: Run security-hardening use case
+  ansible.builtin.import_playbook: playbooks/03-security-hardening.yml
+

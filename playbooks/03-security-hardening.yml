@@ -1,0 +1,23 @@
+---
+- name: Use case 3 - apply a CIS-inspired security baseline
+  hosts: lab_servers
+  become: true
+  gather_facts: true
+  serial: 1
+
+  pre_tasks:
+    - name: Confirm the operator accepts security changes
+      ansible.builtin.assert:
+        that:
+          - ansible_check_mode or (security_change_approved | default(false) | bool)
+        fail_msg: >-
+          Security hardening can affect access. Run first with --check --diff,
+          then add -e security_change_approved=true after review.
+      tags:
+        - always
+
+  roles:
+    - role: security
+      tags:
+        - security
+        - cis

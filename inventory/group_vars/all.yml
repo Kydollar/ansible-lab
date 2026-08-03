@@ -1,0 +1,20 @@
+---
+# Jangan simpan password atau private key di Git. Gunakan SSH agent atau Ansible Vault.
+managed_users:
+  - name: ansible_lab
+    comment: Ansible Lab Administrator
+    groups:
+      - sudo
+    shell: /bin/bash
+
+user_manage_passwordless_sudo: false
+
+nginx_listen_port: 80
+nginx_server_name: _
+
+# Baseline aman untuk lab. SSH hardening sengaja opt-in agar tidak terjadi lockout.
+security_manage_password_policy: true
+security_manage_sysctl: true
+security_manage_cron_permissions: true
+security_harden_ssh: false
+

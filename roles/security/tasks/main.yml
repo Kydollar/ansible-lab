@@ -1,2 +1,126 @@
 ---
-# tasks file for roles/security
+- name: Verify the security role is running on Ubuntu
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution == "Ubuntu"
+      - ansible_facts.distribution_major_version in ['22', '24']
+    fail_msg: "This baseline is scoped to Ubuntu 22.04 and 24.04 LTS."
+  tags:
+    - always
+
+- name: Install baseline security packages
+  ansible.builtin.apt:
+    name:
+      - auditd
+      - libpam-pwquality
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - packages
+
+- name: Ensure auditd is enabled and running
+  ansible.builtin.service:
+    name: auditd
+    enabled: true
+    state: started
+  tags:
+    - audit
+
+- name: Configure password aging policy
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: "^\\s*{{ item.key }}\\s+"
+    line: "{{ item.key }}\t{{ item.value }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { key: PASS_MAX_DAYS, value: "{{ security_password_max_days }}" }
+    - { key: PASS_MIN_DAYS, value: "{{ security_password_min_days }}" }
+    - { key: PASS_WARN_AGE, value: "{{ security_password_warn_age }}" }
+    - { key: UMASK, value: "{{ security_umask }}" }
+  when: security_manage_password_policy | bool
+  tags:
+    - authentication
+
+- name: Disable core dumps for interactive users
+  ansible.builtin.copy:
+    content: "* hard core 0\n"
+    dest: /etc/security/limits.d/99-ansible-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+  tags:
+    - process
+
+- name: Configure network kernel hardening
+  ansible.builtin.template:
+    src: 99-ansible-cis-lab.conf.j2
+    dest: /etc/sysctl.d/99-ansible-cis-lab.conf
+    owner: root
+    group: root
+    mode: "0644"
+  when: security_manage_sysctl | bool
+  notify: Apply sysctl settings
+  tags:
+    - network
+
+- name: Inspect cron configuration paths
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /etc/crontab
+    - /etc/cron.hourly
+    - /etc/cron.daily
+    - /etc/cron.weekly
+    - /etc/cron.monthly
+    - /etc/cron.d
+  register: security_cron_paths
+  when: security_manage_cron_permissions | bool
+  tags:
+    - cron
+
+- name: Restrict cron configuration permissions
+  ansible.builtin.file:
+    path: "{{ item.item }}"
+    owner: root
+    group: root
+    mode: "{{ '0700' if item.stat.isdir else '0600' }}"
+  loop: "{{ security_cron_paths.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when:
+    - security_manage_cron_permissions | bool
+    - item.stat.exists
+  tags:
+    - cron
+
+- name: Check the OpenSSH server configuration
+  ansible.builtin.stat:
+    path: /etc/ssh/sshd_config
+  register: security_sshd_config
+  when: security_harden_ssh | bool
+  tags:
+    - ssh
+
+- name: Require OpenSSH server before SSH hardening
+  ansible.builtin.assert:
+    that:
+      - security_sshd_config.stat.exists
+    fail_msg: "OpenSSH server is not installed; refusing to write an SSH policy."
+  when: security_harden_ssh | bool
+  tags:
+    - ssh
+
+- name: Install the opt-in SSH hardening drop-in
+  ansible.builtin.template:
+    src: 99-ansible-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-ansible-hardening.conf
+    owner: root
+    group: root
+    mode: "0600"
+  when: security_harden_ssh | bool
+  notify: Validate and reload SSH
+  tags:
+    - ssh

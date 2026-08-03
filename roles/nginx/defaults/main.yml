@@ -1,2 +1,4 @@
 ---
-# defaults file for roles/nginx
+nginx_listen_port: 80
+nginx_server_name: _
+nginx_document_root: /var/www/ansible-lab

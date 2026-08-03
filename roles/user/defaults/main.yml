@@ -1,2 +1,9 @@
 ---
-# defaults file for roles/user
+managed_users:
+  - name: ansible_lab
+    comment: Ansible Lab Administrator
+    groups:
+      - sudo
+    shell: /bin/bash
+
+user_manage_passwordless_sudo: false

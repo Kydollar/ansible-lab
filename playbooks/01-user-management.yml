@@ -1,0 +1,11 @@
+---
+- name: Use case 1 - standardize administrator users on three servers
+  hosts: lab_servers
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: user
+      tags:
+        - users
+

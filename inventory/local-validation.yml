@@ -1,0 +1,15 @@
+---
+# Hanya untuk menguji fan-out Ansible tanpa mengubah mesin.
+# Ketiga nama di bawah menunjuk ke control node yang sama, bukan tiga VM nyata.
+all:
+  children:
+    lab_servers:
+      vars:
+        ansible_become: false
+      hosts:
+        vm1:
+          ansible_connection: local
+        vm2:
+          ansible_connection: local
+        vm3:
+          ansible_connection: local
