@@ -1,4 +1,4 @@
-# Ansible Interview Lab
+# Ansible Lab
 
 Lab pemula untuk mendemonstrasikan tiga use case Ansible pada tiga VM Ubuntu.
 
@@ -17,8 +17,6 @@ ansible-inventory --graph
 ansible lab_servers -m ansible.builtin.ping
 ansible-playbook playbooks/01-user-management.yml --check --diff
 ```
-
-Lanjutkan dengan [runbook eksekusi](docs/runbook.md), [ringkasan CIS Benchmark](docs/cis-benchmark.md), dan [catatan interview](docs/interview-notes.md).
 
 ## Struktur
 
